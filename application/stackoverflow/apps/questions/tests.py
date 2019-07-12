@@ -1,6 +1,6 @@
 from django.test import TestCase, RequestFactory
 from ..users.views import RegistrationView, LoginView
-from .views import PostQuestionView, UpdateQuestionView
+from .views import PostQuestionView, UpdateQuestionView, CloseQuestionView
 import json
 
 
@@ -22,6 +22,11 @@ class QuestionsAppTestCase(TestCase):
             'question': {
                 'title': 'updated title',
                 'body': 'updated body'
+            }
+        }
+        self.close_question = {
+            'question': {
+                'is_closed': True
             }
         }
         self.user = {
@@ -111,4 +116,35 @@ class QuestionsAppTestCase(TestCase):
         request = self.factory.put('/api/v1/questions/update/', **headers, content_type='application/json',
                                    data=json.dumps(self.update_question))
         response = UpdateQuestionView.as_view()(request, **{'id': 10})
+        self.assertEqual(response.status_code, 400)
+
+    def test_close_question(self):
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
+        }
+        request = self.factory.put('/api/v1/questions/close/', **headers, content_type='application/json',
+                                   data=json.dumps(self.close_question))
+        response = CloseQuestionView.as_view()(request, **{'id': 1})
+        self.assertEqual(response.status_code, 201)
+
+    def test_unauthorized_question_close(self):
+        # register user
+        self.register(self.user2)
+        # login user
+        login_response = self.login(self.login_user2)
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        request = self.factory.put('/api/v1/questions/close/', **headers, content_type='application/json',
+                                   data=json.dumps(self.update_question))
+        response = CloseQuestionView.as_view()(request, **{'id': 1})
+        self.assertEqual(response.status_code, 400)
+
+    def test_close_question_not_found(self):
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
+        }
+        request = self.factory.put('/api/v1/questions/close/', **headers, content_type='application/json',
+                                   data=json.dumps(self.update_question))
+        response = CloseQuestionView.as_view()(request, **{'id': 10})
         self.assertEqual(response.status_code, 400)

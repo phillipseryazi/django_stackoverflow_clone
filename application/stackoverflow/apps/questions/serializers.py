@@ -27,3 +27,15 @@ class UpdateQuestionSerializer(serializers.ModelSerializer):
         instance.updated_at = datetime.now(tz=get_current_timezone()).isoformat()
         instance.save()
         return instance
+
+
+class CloseQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ('is_closed',)
+
+    def update(self, instance, validated_data):
+        instance.is_closed = validated_data['is_closed']
+        instance.updated_at = datetime.now(tz=get_current_timezone()).isoformat()
+        instance.save()
+        return instance
