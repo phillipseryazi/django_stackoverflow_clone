@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     'stackoverflow.apps.users',
     'stackoverflow.apps.questions',
+    'stackoverflow.apps.comments',
 ]
 
 MIDDLEWARE = [
