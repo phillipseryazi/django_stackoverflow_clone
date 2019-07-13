@@ -58,8 +58,8 @@ class UpdateQuestionView(UpdateAPIView):
             return Response({'details': 'You are not authorised to edit this question.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        updated_property = self.serializer_class().update(queryset[0], request_data)
-        return Response(data=self.serializer_class(updated_property).data, status=status.HTTP_201_CREATED)
+        updated_question = self.serializer_class().update(queryset[0], request_data)
+        return Response(data=self.serializer_class(updated_question).data, status=status.HTTP_201_CREATED)
 
 
 class CloseQuestionView(UpdateAPIView):

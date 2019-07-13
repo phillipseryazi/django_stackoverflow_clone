@@ -2,15 +2,15 @@ import json
 from rest_framework.renderers import JSONRenderer
 
 
-class QuestionRenderer(JSONRenderer):
+class CommentRenderer(JSONRenderer):
     charset = 'utf-8'
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        return json.dumps({'question': data})
+        return json.dumps({'comment': data})
 
 
-class QuestionListRenderer(JSONRenderer):
+class CommentListRenderer(JSONRenderer):
     charset = 'utf-8'
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        return json.dumps({'questions': data})
+        return json.dumps({'comments': data})
