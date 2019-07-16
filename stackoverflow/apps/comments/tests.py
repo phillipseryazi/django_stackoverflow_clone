@@ -3,7 +3,10 @@ from datetime import datetime, timedelta
 from django.test import TestCase, RequestFactory
 from ..users.views import RegistrationView, LoginView
 from ..questions.views import PostQuestionView
-from .views import (PostQuestionCommentView, UpdateQuestionCommentView, DeleteQuestionComment)
+from .views import (PostQuestionCommentView, UpdateQuestionCommentView,
+                    DeleteQuestionComment, PostAnswerCommentView,
+                    UpdateAnswerCommentView)
+from ..answers.views import PostAnswerView
 
 import json
 
@@ -58,6 +61,12 @@ class CommentsAppTestCase(TestCase):
             }
         }
 
+        self.answer = {
+            'answer': {
+                'body': 'this is an answer'
+            }
+        }
+
         # register user
         self.register(self.user)
 
@@ -66,6 +75,9 @@ class CommentsAppTestCase(TestCase):
 
         # create question
         self.qn_result = self.create_question()
+
+        # create answer
+        self.ans_result = self.create_answer()
 
     def register(self, user):
         request = self.factory.post('/api/v1/auth/signup/',
@@ -88,6 +100,15 @@ class CommentsAppTestCase(TestCase):
         request = self.factory.post('/api/v1/questions/add/', **headers, content_type='application/json',
                                     data=json.dumps(self.question))
         response = PostQuestionView.as_view()(request)
+        return response
+
+    def create_answer(self):
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
+        }
+        request = self.factory.post('/api/v1/questions/answers/add/', **headers, content_type='application/json',
+                                    data=json.dumps(self.answer))
+        response = PostAnswerView.as_view()(request, **{'qid': 1})
         return response
 
     def add_question_comment(self):
@@ -162,3 +183,50 @@ class CommentsAppTestCase(TestCase):
     def test_delete_question_comment_not_found(self):
         response = self.delete_question_comment()
         self.assertEqual(response.status_code, 404)
+
+    def add_answer_comment(self):
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
+        }
+        request = self.factory.post('/api/v1/questions/comments/answers/add/', **headers,
+                                    content_type='application/json',
+                                    data=json.dumps(self.question_comment))
+        response = PostAnswerCommentView.as_view()(request, **{'aid': 1})
+        return response
+
+    def update_answer_comment(self):
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
+        }
+        request = self.factory.put('/api/v1/questions/comments/answers/add/', **headers,
+                                   content_type='application/json',
+                                   data=json.dumps(self.update_qn_comment))
+        response = UpdateAnswerCommentView.as_view()(request, **{'cid': 1})
+        return response
+
+    def test_post_answer_comment(self):
+        response = self.add_answer_comment()
+        self.assertEqual(response.status_code, 201)
+
+    def test_update_answer_comment(self):
+        self.add_answer_comment()
+        response = self.update_answer_comment()
+        self.assertEqual(response.status_code, 201)
+
+    def test_unauthorized_update_ans_comment(self):
+        self.register(self.user2)
+        login_response = self.login(self.login_user2)
+        self.create_answer()
+        self.add_answer_comment()
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        request = self.factory.put('/api/v1/questions/comments/answers/add/', **headers,
+                                   content_type='application/json',
+                                   data=json.dumps(self.update_qn_comment))
+        response = UpdateAnswerCommentView.as_view()(request, **{'cid': 1})
+        self.assertEqual(response.status_code, 400)
+
+    def test_update_ans_comment_not_found(self):
+        response = self.update_answer_comment()
+        self.assertEqual(response.status_code, 400)
