@@ -1,4 +1,3 @@
-from psycopg2._psycopg import DatabaseError
 from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

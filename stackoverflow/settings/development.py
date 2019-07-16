@@ -4,7 +4,7 @@ from .base import *
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-DB_URL = os.environ['DB_URL']
+DB_URL = os.environ['DATABASE_URL']
 PARSED_DB_URL = urlparse(DB_URL)
 DB_NAME = PARSED_DB_URL.path[1:]
 DB_USER = PARSED_DB_URL.username
