@@ -14,3 +14,17 @@ class QuestionListRenderer(JSONRenderer):
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         return json.dumps({'questions': data})
+
+
+class VotesRenderer(JSONRenderer):
+    charset = 'utf-8'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return json.dumps({'vote': data})
+
+
+class VotesListRenderer(JSONRenderer):
+    charset = 'utf-8'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return json.dumps({'votes': data})

@@ -1,13 +1,14 @@
-from rest_framework.generics import (CreateAPIView, UpdateAPIView, ListAPIView)
+from psycopg2._psycopg import DatabaseError
+from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from .renderers import QuestionRenderer
-from .serializers import (PostQuestionSerializer, UpdateQuestionSerializer, CloseQuestionSerializer)
+from .renderers import (QuestionRenderer, VotesRenderer, )
+from .serializers import (PostQuestionSerializer, UpdateQuestionSerializer, CloseQuestionSerializer, VotesSerializer)
 from ..users.backends import JWTAuthentication
 from ...utils.decoder import decode_token
-from .models import Tag, Question
+from .models import Tag, Question, Votes
 
 
 def save_tags(qn_id, request_data):
@@ -89,3 +90,48 @@ class CloseQuestionView(UpdateAPIView):
 
         updated_property = self.serializer_class().update(queryset[0], request_data)
         return Response(data=self.serializer_class(updated_property).data, status=status.HTTP_201_CREATED)
+
+
+class UpVoteQuestionView(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (VotesRenderer,)
+    serializer_class = VotesSerializer
+
+    def post(self, request, *args, **kwargs):
+        jwt = JWTAuthentication()
+        user = jwt.authenticate(self.request)
+
+        request_data = request.data.get('vote', {})
+        token_data = decode_token(user[1])
+
+        queryset = Votes.objects.filter(user_id=token_data['id'], question_id=request_data['question_id'])
+
+        if queryset:
+            return Response({'details': 'You already voted on this question'}, status=status.HTTP_200_OK)
+
+        serializer = self.serializer_class(data=request_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user_id=token_data['id'], question_id=request_data['question_id'])
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class DownVoteQuestion(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (VotesRenderer,)
+    serializer_class = VotesSerializer
+
+    def post(self, request, *args, **kwargs):
+        jwt = JWTAuthentication()
+        user = jwt.authenticate(self.request)
+
+        request_data = request.data.get('vote', {})
+        token_data = decode_token(user[1])
+
+        queryset = Votes.objects.filter(user_id=token_data['id'], question_id=request_data['question_id'])
+        if queryset:
+            return Response({'details': 'You already voted on this question'}, status=status.HTTP_200_OK)
+
+        serializer = self.serializer_class(data=request_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user_id=token_data['id'], question_id=request_data['question_id'])
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

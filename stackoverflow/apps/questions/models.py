@@ -16,11 +16,16 @@ class Question(models.Model):
 
 
 class Rating(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='question_fk')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='question_rating_fk')
     likes = models.IntegerField()
     views = models.IntegerField()
-    up_votes = models.IntegerField()
-    down_votes = models.IntegerField()
+
+
+class Votes(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='question_vote_fk')
+    user_id = models.IntegerField()
+    up_vote = models.BooleanField(default=False)
+    down_vote = models.BooleanField(default=False)
 
 
 class Tag(models.Model):

@@ -1,6 +1,6 @@
 from django.test import TestCase, RequestFactory
 from ..users.views import RegistrationView, LoginView
-from .views import PostQuestionView, UpdateQuestionView, CloseQuestionView
+from .views import (PostQuestionView, UpdateQuestionView, CloseQuestionView, UpVoteQuestionView, DownVoteQuestion)
 import json
 
 
@@ -148,3 +148,49 @@ class QuestionsAppTestCase(TestCase):
                                    data=json.dumps(self.update_question))
         response = CloseQuestionView.as_view()(request, **{'id': 10})
         self.assertEqual(response.status_code, 400)
+
+    def test_up_vote_question(self):
+        self.register(self.user)
+        login_response = self.login(self.login_user)
+        vote = {
+            'vote': {
+                'question_id': 1,
+                'up_vote': True,
+                'down_vote': False
+            }
+        }
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        # create question
+        request = self.factory.post('/api/v1/questions/add/', **headers, content_type='application/json',
+                                    data=json.dumps(self.question))
+        PostQuestionView.as_view()(request)
+        # up vote question
+        request = self.factory.post('/api/v1/questions/upvote/', **headers, content_type='application/json',
+                                    data=json.dumps(vote))
+        response = UpVoteQuestionView.as_view()(request)
+        self.assertEqual(response.status_code, 201)
+
+    def test_down_vote_question(self):
+        self.register(self.user)
+        login_response = self.login(self.login_user)
+        vote = {
+            'vote': {
+                'question_id': 1,
+                'up_vote': False,
+                'down_vote': True
+            }
+        }
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        # create question
+        request = self.factory.post('/api/v1/questions/add/', **headers, content_type='application/json',
+                                    data=json.dumps(self.question))
+        PostQuestionView.as_view()(request)
+        # up vote question
+        request = self.factory.post('/api/v1/questions/downvote/', **headers, content_type='application/json',
+                                    data=json.dumps(vote))
+        response = DownVoteQuestion.as_view()(request)
+        self.assertEqual(response.status_code, 201)
