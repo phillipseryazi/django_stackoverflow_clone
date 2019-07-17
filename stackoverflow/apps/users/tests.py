@@ -6,7 +6,7 @@ import jwt
 from django.test import TestCase, RequestFactory
 
 from .backends import JWTAuthentication
-from .views import RegistrationView, LoginView
+from .views import RegistrationView, LoginView, UserProfileView
 
 
 # Create your tests here.
@@ -145,3 +145,18 @@ class UsersAppTestCase(TestCase):
         result = self.auth._authenticate_credentials(request, login_response.data['token'])
         # assert
         self.assertEquals(self.reg_user['user']['email'], str(result[0]))
+
+    def test_get_user_profile(self):
+        # register user
+        self.register(self.reg_user)
+        # login user
+        login_response = self.login(self.login_user)
+        # get user profile
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        request = self.factory.get('/api/v1/auth/profile/', **headers, content_type='application/json')
+        response = UserProfileView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+
+

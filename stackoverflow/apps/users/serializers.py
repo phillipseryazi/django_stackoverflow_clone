@@ -46,3 +46,10 @@ class LoginSerializer(serializers.Serializer):
                 'no such user with this email or password')
 
         return {'username': user.username, 'token': user.token}
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'bio', 'image')
+        read_only_fields = ('id', 'username', 'email', 'bio', 'image')
