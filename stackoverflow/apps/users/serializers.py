@@ -39,7 +39,6 @@ class LoginSerializer(serializers.Serializer):
         password = data.get('password', None)
 
         user = authenticate(username=email, password=password)
-        print(user)
 
         if user is None:
             raise serializers.ValidationError(

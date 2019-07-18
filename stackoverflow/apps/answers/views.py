@@ -9,6 +9,17 @@ from .serializers import PostAnswerSerializer, UpdateAnswerSerializer
 from .models import Answer
 from ..users.backends import JWTAuthentication
 from ...utils.decoder import decode_token
+from ...utils.emailer import send_email
+from ..questions.models import Question
+from ..users.models import User
+
+
+def get_question(qid):
+    return Question.objects.get(id=qid)
+
+
+def get_user(uid):
+    return User.objects.get(id=uid)
 
 
 # Create your views here.
@@ -17,6 +28,16 @@ class PostAnswerView(CreateAPIView):
     renderer_classes = (AnswerRenderer,)
     serializer_class = PostAnswerSerializer
     lookup_url_kwarg = 'qid'
+    email_dict = dict()
+
+    def email(self, request, recipient, payload):
+        self.email_dict['sender'] = 'Stackoverflow Clone'
+        self.email_dict['recipient'] = recipient
+        self.email_dict['subject'] = 'New Answer'
+        self.email_dict['type'] = 'Question'
+        self.email_dict['content'] = 'Answer'
+        self.email_dict['payload'] = payload
+        send_email(request=request, data=self.email_dict)
 
     def post(self, request, *args, **kwargs):
         qid = self.kwargs.get(self.lookup_url_kwarg)
@@ -24,9 +45,15 @@ class PostAnswerView(CreateAPIView):
         user = jwt.authenticate(self.request)
         token_data = decode_token(user[1])
         request_data = request.data.get('answer', {})
+
         serializer = self.serializer_class(data=request_data)
         serializer.is_valid(raise_exception=True)
         serializer.save(question_id=qid, user_id=token_data['id'])
+
+        question = get_question(qid)
+        user = get_user(question.user_id)
+        self.email(request, user.email, question.title)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

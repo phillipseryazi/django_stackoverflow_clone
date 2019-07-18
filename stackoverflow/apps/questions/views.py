@@ -8,12 +8,22 @@ from .serializers import (PostQuestionSerializer, UpdateQuestionSerializer, Clos
 from ..users.backends import JWTAuthentication
 from ...utils.decoder import decode_token
 from .models import Tag, Question, Votes
+from ..users.models import User
+from ...utils.emailer import send_email
 
 
 def save_tags(qn_id, request_data):
     for item in request_data['tags']:
         tag = Tag(question=qn_id, tag=item)
         tag.save()
+
+
+def get_question(qid):
+    return Question.objects.get(id=qid)
+
+
+def get_user(uid):
+    return User.objects.get(id=uid)
 
 
 class PostQuestionView(CreateAPIView):
@@ -95,22 +105,39 @@ class UpVoteQuestionView(CreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (VotesRenderer,)
     serializer_class = VotesSerializer
+    lookup_url_kwarg = 'qid'
+    email_dict = dict()
+
+    def email(self, request, recipient, payload):
+        self.email_dict['sender'] = 'Stackoverflow Clone'
+        self.email_dict['recipient'] = recipient
+        self.email_dict['subject'] = 'New Upvote'
+        self.email_dict['type'] = 'Question'
+        self.email_dict['content'] = 'Upvote'
+        self.email_dict['payload'] = payload
+        send_email(request=request, data=self.email_dict)
 
     def post(self, request, *args, **kwargs):
+        qid = self.kwargs.get(self.lookup_url_kwarg)
         jwt = JWTAuthentication()
         user = jwt.authenticate(self.request)
 
         request_data = request.data.get('vote', {})
         token_data = decode_token(user[1])
 
-        queryset = Votes.objects.filter(user_id=token_data['id'], question_id=request_data['question_id'])
+        queryset = Votes.objects.filter(user_id=token_data['id'], question_id=qid)
 
         if queryset:
             return Response({'details': 'You already voted on this question'}, status=status.HTTP_200_OK)
 
         serializer = self.serializer_class(data=request_data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user_id=token_data['id'], question_id=request_data['question_id'])
+        serializer.save(user_id=token_data['id'], question_id=qid)
+
+        question = get_question(qid)
+        user = get_user(question.user_id)
+        self.email(request, user.email, question.title)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -118,19 +145,21 @@ class DownVoteQuestion(CreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (VotesRenderer,)
     serializer_class = VotesSerializer
+    lookup_url_kwarg = 'qid'
 
     def post(self, request, *args, **kwargs):
+        qid = self.kwargs.get(self.lookup_url_kwarg)
         jwt = JWTAuthentication()
         user = jwt.authenticate(self.request)
 
         request_data = request.data.get('vote', {})
         token_data = decode_token(user[1])
 
-        queryset = Votes.objects.filter(user_id=token_data['id'], question_id=request_data['question_id'])
+        queryset = Votes.objects.filter(user_id=token_data['id'], question_id=qid)
         if queryset:
             return Response({'details': 'You already voted on this question'}, status=status.HTTP_200_OK)
 
         serializer = self.serializer_class(data=request_data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user_id=token_data['id'], question_id=request_data['question_id'])
+        serializer.save(user_id=token_data['id'], question_id=qid)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -4,12 +4,16 @@ from .views import PostAnswerView, UpdateAnswerView
 from ..questions.views import PostQuestionView
 
 import json
+from minimock import Mock
+import smtplib
 
 
 # Create your tests here.
 class AnswersAppTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
+        smtplib.SMTP = Mock('smtplib.SMTP')
+        smtplib.SMTP.mock_returns = Mock('smtp_connection')
         self.user = {
             'user': {
                 'username': 'test-user',

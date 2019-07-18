@@ -9,12 +9,16 @@ from .views import (PostQuestionCommentView, UpdateQuestionCommentView,
 from ..answers.views import PostAnswerView
 
 import json
+from minimock import Mock
+import smtplib
 
 
 # Create your tests here.
 class CommentsAppTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
+        smtplib.SMTP = Mock('smtplib.SMTP')
+        smtplib.SMTP.mock_returns = Mock('smtp_connection')
         # user credentials
         self.user = {
             'user': {

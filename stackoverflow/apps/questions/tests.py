@@ -2,12 +2,16 @@ from django.test import TestCase, RequestFactory
 from ..users.views import RegistrationView, LoginView
 from .views import (PostQuestionView, UpdateQuestionView, CloseQuestionView, UpVoteQuestionView, DownVoteQuestion)
 import json
+from minimock import Mock
+import smtplib
 
 
 # Create your tests here.
 class QuestionsAppTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
+        smtplib.SMTP = Mock('smtplib.SMTP')
+        smtplib.SMTP.mock_returns = Mock('smtp_connection')
         self.question = {
             "question": {
                 "title": "sample title",
@@ -154,7 +158,6 @@ class QuestionsAppTestCase(TestCase):
         login_response = self.login(self.login_user)
         vote = {
             'vote': {
-                'question_id': 1,
                 'up_vote': True,
                 'down_vote': False
             }
@@ -169,7 +172,7 @@ class QuestionsAppTestCase(TestCase):
         # up vote question
         request = self.factory.post('/api/v1/questions/upvote/', **headers, content_type='application/json',
                                     data=json.dumps(vote))
-        response = UpVoteQuestionView.as_view()(request)
+        response = UpVoteQuestionView.as_view()(request, **{'qid': 1})
         self.assertEqual(response.status_code, 201)
 
     def test_down_vote_question(self):
@@ -177,7 +180,6 @@ class QuestionsAppTestCase(TestCase):
         login_response = self.login(self.login_user)
         vote = {
             'vote': {
-                'question_id': 1,
                 'up_vote': False,
                 'down_vote': True
             }
@@ -192,5 +194,5 @@ class QuestionsAppTestCase(TestCase):
         # up vote question
         request = self.factory.post('/api/v1/questions/downvote/', **headers, content_type='application/json',
                                     data=json.dumps(vote))
-        response = DownVoteQuestion.as_view()(request)
+        response = DownVoteQuestion.as_view()(request, **{'qid': 1})
         self.assertEqual(response.status_code, 201)
