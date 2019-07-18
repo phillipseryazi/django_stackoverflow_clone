@@ -9,6 +9,7 @@ from .models import User
 from .serializers import (RegistrationSerializer, LoginSerializer, ProfileSerializer)
 from .backends import JWTAuthentication
 from ...utils.decoder import decode_token
+from ...utils.emailer import send_email
 
 
 # Create your views here.

@@ -8,6 +8,9 @@ from django.test import TestCase, RequestFactory
 from .backends import JWTAuthentication
 from .views import RegistrationView, LoginView, UserProfileView
 
+from minimock import Mock
+import smtplib
+
 
 # Create your tests here.
 
@@ -15,6 +18,8 @@ from .views import RegistrationView, LoginView, UserProfileView
 class UsersAppTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
+        smtplib.SMTP = Mock('smtplib.SMTP')
+        smtplib.SMTP.mock_returns = Mock('smtp_connection')
         self.auth = JWTAuthentication()
         self.reg_user = {'user':
             {
@@ -158,5 +163,3 @@ class UsersAppTestCase(TestCase):
         request = self.factory.get('/api/v1/auth/profile/', **headers, content_type='application/json')
         response = UserProfileView.as_view()(request)
         self.assertEqual(response.status_code, 200)
-
-
