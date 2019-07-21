@@ -9,8 +9,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         extra_kwargs = {'email': {'write_only': True},
                         'password': {'write_only': True}, }
-        fields = ('username', 'email', 'bio',
-                  'image', 'isAdmin', 'password')
+        fields = ('id', 'username', 'email', 'bio', 'image', 'isAdmin', 'password', 'badge',)
+        read_only_fields = ('id', 'badge',)
 
     def validate_password(self, value):
         if len(value) < 8 or not value:
@@ -50,5 +50,5 @@ class LoginSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'bio', 'image')
-        read_only_fields = ('id', 'username', 'email', 'bio', 'image')
+        fields = ('id', 'username', 'email', 'bio', 'image', 'badge')
+        read_only_fields = ('id', 'username', 'email', 'bio', 'image', 'badge')

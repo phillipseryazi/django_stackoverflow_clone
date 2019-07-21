@@ -9,9 +9,11 @@ class Answer(models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(blank=True, null=True)
+    up_votes = models.IntegerField(default=0)
 
 
-class Rating(models.Model):
-    question = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='answer_rating_fk')
-    user_id = models.IntegerField(default=0)
-    likes = models.IntegerField()
+class Votes(models.Model):
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='answer_rating_fk')
+    user_id = models.IntegerField()
+    up_vote = models.BooleanField(default=False)
+    down_vote = models.BooleanField(default=False)

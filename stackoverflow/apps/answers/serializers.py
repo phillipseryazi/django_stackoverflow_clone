@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Answer
+from .models import Answer, Votes
 from datetime import datetime
 from django.utils.timezone import get_current_timezone
 
@@ -22,3 +22,10 @@ class UpdateAnswerSerializer(serializers.ModelSerializer):
         instance.updated_at = datetime.now(tz=get_current_timezone()).isoformat()
         instance.save()
         return instance
+
+
+class VotesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Votes
+        fields = ('id', 'user_id', 'up_vote', 'down_vote', 'answer_id')
+        read_only_fields = ('id', 'user_id', 'answer_id')
