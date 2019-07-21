@@ -1,21 +1,23 @@
 from django.db import models
 from datetime import datetime, timedelta
-from django.contrib.auth.models import(
+from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser, PermissionsMixin)
 import os
 import jwt
+
 
 # Create your models here.
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, email, bio, image, password=None, isAdmin=False):
+    def create_user(self, username, email, bio, image, badge='', password=None, isAdmin=False):
         user = self.model(
             username=username,
             email=self.normalize_email(email),
             bio=bio,
             image=image,
             isAdmin=isAdmin,
+            badge=badge,
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -28,6 +30,7 @@ class User(AbstractBaseUser):
     bio = models.CharField(max_length=255)
     isAdmin = models.BooleanField(default=False)
     image = models.URLField()
+    badge = models.TextField()
 
     objects = UserManager()
     USERNAME_FIELD = 'email'
@@ -38,7 +41,7 @@ class User(AbstractBaseUser):
         return self._generate_jwt_token()
 
     def _generate_jwt_token(self):
-        dt = datetime.now()+timedelta(days=60)
+        dt = datetime.now() + timedelta(days=60)
         token = jwt.encode({
             'id': self.pk,
             'isAdmin': self.isAdmin,

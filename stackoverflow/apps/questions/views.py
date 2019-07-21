@@ -138,6 +138,10 @@ class UpVoteQuestionView(CreateAPIView):
         user = get_user(question.user_id)
         self.email(request, user.email, question.title)
 
+        question = Question.objects.get(id=qid)
+        question.up_votes = question.up_votes + 1
+        question.save()
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

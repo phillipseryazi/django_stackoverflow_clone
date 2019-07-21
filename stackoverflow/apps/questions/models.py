@@ -13,6 +13,7 @@ class Question(models.Model):
     is_closed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(blank=True, null=True)
+    up_votes = models.IntegerField(default=0)
 
 
 class Rating(models.Model):

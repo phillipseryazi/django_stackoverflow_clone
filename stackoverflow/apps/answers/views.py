@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .renderers import AnswerRenderer, AnswerListRenderer
-from .serializers import PostAnswerSerializer, UpdateAnswerSerializer
-from .models import Answer
+from .serializers import PostAnswerSerializer, UpdateAnswerSerializer, VotesSerializer
+from .models import Answer, Votes
 from ..users.backends import JWTAuthentication
 from ...utils.decoder import decode_token
 from ...utils.emailer import send_email
@@ -84,3 +84,57 @@ class UpdateAnswerView(UpdateAPIView):
 
         updated_answer = self.serializer_class().update(queryset[0], request_data)
         return Response(data=self.serializer_class(updated_answer).data, status=status.HTTP_201_CREATED)
+
+
+def up_badge_user(request, answer):
+    user = get_user(answer.user_id)
+    email_dict = dict()
+    email_dict['sender'] = 'Stackoverflow Clone'
+    email_dict['recipient'] = user.email
+    email_dict['subject'] = 'New Badge'
+    email_dict['type'] = 'Answer'
+    email_dict['content'] = 'Upvote'
+    email_dict['payload'] = 'You have gained a new badge'
+    if answer.up_votes >= 10:
+        user.badge = 'Rookie'
+        user.save()
+        send_email(request=request, data=email_dict)
+    elif answer.up_votes >= 20:
+        user.badge = 'Ranger'
+        user.save()
+        send_email(request=request, data=email_dict)
+    elif answer.up_votes >= 30:
+        user.badge = 'Veteran'
+        user.save()
+        send_email(request=request, data=email_dict)
+
+
+class UpVoteAnswerView(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (AnswerRenderer,)
+    serializer_class = VotesSerializer
+    lookup_url_kwarg = 'aid'
+
+    def post(self, request, *args, **kwargs):
+        aid = self.kwargs.get(self.lookup_url_kwarg)
+        jwt = JWTAuthentication()
+        user = jwt.authenticate(self.request)
+
+        request_data = request.data.get('vote', {})
+        token_data = decode_token(user[1])
+
+        queryset = Votes.objects.filter(user_id=token_data['id'], answer_id=aid)
+
+        if queryset:
+            return Response({'details': 'You already voted on this answer'}, status=status.HTTP_200_OK)
+
+        serializer = self.serializer_class(data=request_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user_id=token_data['id'], answer_id=aid)
+
+        answer = Answer.objects.get(id=aid)
+        answer.up_votes = answer.up_votes + 1
+        answer.save()
+        up_badge_user(request, answer)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

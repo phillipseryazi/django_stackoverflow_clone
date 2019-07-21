@@ -1,6 +1,6 @@
 from django.test import TestCase, RequestFactory
 from ..users.views import RegistrationView, LoginView
-from .views import PostAnswerView, UpdateAnswerView
+from .views import PostAnswerView, UpdateAnswerView, UpVoteAnswerView
 from ..questions.views import PostQuestionView
 
 import json
@@ -142,3 +142,29 @@ class AnswersAppTestCase(TestCase):
                                    data=json.dumps(self.update_answer))
         response = UpdateAnswerView.as_view()(request, **{'aid': 1})
         self.assertEqual(response.status_code, 400)
+
+    def test_up_vote_answer(self):
+        self.register(self.user)
+        login_response = self.login(self.login_user)
+        vote = {
+            'vote': {
+                'up_vote': True,
+                'down_vote': False
+            }
+        }
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        # create question
+        # request = self.factory.post('/api/v1/questions/add/', **headers, content_type='application/json',
+        #                             data=json.dumps(self.question))
+        # PostQuestionView.as_view()(request)
+        # create answer
+        request = self.factory.post('/api/v1/questions/answers/add/', **headers, content_type='application/json',
+                                    data=json.dumps(self.answer))
+        PostAnswerView.as_view()(request, **{'qid': 1})
+        # up vote answer
+        request = self.factory.post('/api/v1/questions/answers/upvote/', **headers, content_type='application/json',
+                                    data=json.dumps(vote))
+        response = UpVoteAnswerView.as_view()(request, **{'aid': 1})
+        self.assertEqual(response.status_code, 201)
