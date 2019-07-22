@@ -1,10 +1,11 @@
-from rest_framework.generics import (CreateAPIView, UpdateAPIView)
+from rest_framework.generics import (CreateAPIView, UpdateAPIView, RetrieveAPIView, ListAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from .renderers import (QuestionRenderer, VotesRenderer, )
-from .serializers import (PostQuestionSerializer, UpdateQuestionSerializer, CloseQuestionSerializer, VotesSerializer)
+from .renderers import (QuestionRenderer, VotesRenderer, QuestionListRenderer)
+from .serializers import (PostQuestionSerializer, UpdateQuestionSerializer,
+                          CloseQuestionSerializer, VotesSerializer, GetQuestionSerializer)
 from ..users.backends import JWTAuthentication
 from ...utils.decoder import decode_token
 from .models import Tag, Question, Votes
@@ -167,3 +168,12 @@ class DownVoteQuestion(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user_id=token_data['id'], question_id=qid)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class GetRecommendedQuestions(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (QuestionListRenderer,)
+    serializer_class = GetQuestionSerializer
+
+    def get_queryset(self):
+        return Question.objects.all().filter().order_by('up_votes')
