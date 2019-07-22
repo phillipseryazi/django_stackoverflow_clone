@@ -16,6 +16,14 @@ class PostQuestionSerializer(serializers.ModelSerializer):
         return slugify(f'{title}{datetime.now().isoformat()}')
 
 
+class GetQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ('id', 'title', 'slug', 'body', 'is_open', 'is_resolved', 'is_closed', 'user_id', 'up_votes')
+        read_only_fields = ('id', 'title', 'slug', 'body',
+                            'is_open', 'is_resolved', 'is_closed', 'user_id', 'up_votes')
+
+
 class UpdateQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
