@@ -96,17 +96,17 @@ def up_badge_user(request, answer):
     email_dict['content'] = 'Upvote'
     email_dict['payload'] = 'You have gained a new badge'
     if answer.up_votes >= 10:
-        user.badge = 'Rookie'
-        user.save()
-        send_email(request=request, data=email_dict)
+        save_badge(user, request, 'Rookie', email_dict)
     elif answer.up_votes >= 20:
-        user.badge = 'Ranger'
-        user.save()
-        send_email(request=request, data=email_dict)
+        save_badge(user, request, 'Ranger', email_dict)
     elif answer.up_votes >= 30:
-        user.badge = 'Veteran'
-        user.save()
-        send_email(request=request, data=email_dict)
+        save_badge(user, request, 'Veteran', email_dict)
+
+
+def save_badge(user, request, badge, email_dict):
+    user.badge = badge
+    user.save()
+    send_email(request=request, data=email_dict)
 
 
 class UpVoteAnswerView(CreateAPIView):
@@ -126,7 +126,7 @@ class UpVoteAnswerView(CreateAPIView):
         queryset = Votes.objects.filter(user_id=token_data['id'], answer_id=aid)
 
         if queryset:
-            return Response({'details': 'You already voted on this answer'}, status=status.HTTP_200_OK)
+            return Response({'details': 'You already voted on this answer'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.serializer_class(data=request_data)
         serializer.is_valid(raise_exception=True)

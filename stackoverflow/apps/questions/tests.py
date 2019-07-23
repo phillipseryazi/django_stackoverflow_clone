@@ -1,7 +1,8 @@
 from django.test import TestCase, RequestFactory
 from ..users.views import RegistrationView, LoginView
-from .views import (PostQuestionView, UpdateQuestionView, CloseQuestionView,
-                    UpVoteQuestionView, DownVoteQuestion, GetRecommendedQuestions)
+from .views import (PostQuestionView, UpdateQuestionView,
+                    CloseQuestionView, UpVoteQuestionView,
+                    DownVoteQuestionView, GetRecommendedQuestionsView, SearchQuestionsView)
 import json
 from minimock import Mock
 import smtplib
@@ -195,14 +196,21 @@ class QuestionsAppTestCase(TestCase):
         # up vote question
         request = self.factory.post('/api/v1/questions/downvote/', **headers, content_type='application/json',
                                     data=json.dumps(vote))
-        response = DownVoteQuestion.as_view()(request, **{'qid': 1})
+        response = DownVoteQuestionView.as_view()(request, **{'qid': 1})
         self.assertEqual(response.status_code, 201)
 
     def test_get_recommendations(self):
         headers = {
             'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
         }
-        # create question
         request = self.factory.get('/api/v1/questions/recommendations/', **headers, content_type='application/json')
-        response = GetRecommendedQuestions.as_view()(request)
+        response = GetRecommendedQuestionsView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_search_questions_by_tags(self):
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + self.login_response.data['token']
+        }
+        request = self.factory.get('/api/v1/questions/search', **headers, content_type='application/json')
+        response = SearchQuestionsView.as_view()(request, {'topic': 'django'})
         self.assertEqual(response.status_code, 200)

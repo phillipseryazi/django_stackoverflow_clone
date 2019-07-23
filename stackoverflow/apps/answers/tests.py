@@ -155,16 +155,36 @@ class AnswersAppTestCase(TestCase):
         headers = {
             'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
         }
-        # create question
-        # request = self.factory.post('/api/v1/questions/add/', **headers, content_type='application/json',
-        #                             data=json.dumps(self.question))
-        # PostQuestionView.as_view()(request)
-        # create answer
         request = self.factory.post('/api/v1/questions/answers/add/', **headers, content_type='application/json',
                                     data=json.dumps(self.answer))
         PostAnswerView.as_view()(request, **{'qid': 1})
         # up vote answer
-        request = self.factory.post('/api/v1/questions/answers/upvote/', **headers, content_type='application/json',
-                                    data=json.dumps(vote))
-        response = UpVoteAnswerView.as_view()(request, **{'aid': 1})
+        request2 = self.factory.post('/api/v1/questions/answers/upvote/', **headers, content_type='application/json',
+                                     data=json.dumps(vote))
+        response = UpVoteAnswerView.as_view()(request2, **{'aid': 1})
         self.assertEqual(response.status_code, 201)
+
+    def test_double_up_vote_answer(self):
+        self.register(self.user)
+        login_response = self.login(self.login_user)
+        vote = {
+            'vote': {
+                'up_vote': True,
+                'down_vote': False
+            }
+        }
+        headers = {
+            'HTTP_AUTHORIZATION': 'Bearer ' + login_response.data['token']
+        }
+        request = self.factory.post('/api/v1/questions/answers/add/', **headers, content_type='application/json',
+                                    data=json.dumps(self.answer))
+        PostAnswerView.as_view()(request, **{'qid': 1})
+        # up vote answer
+        request2 = self.factory.post('/api/v1/questions/answers/upvote/', **headers, content_type='application/json',
+                                     data=json.dumps(vote))
+        UpVoteAnswerView.as_view()(request2, **{'aid': 1})
+        # up vote same answer again
+        request3 = self.factory.post('/api/v1/questions/answers/upvote/', **headers, content_type='application/json',
+                                     data=json.dumps(vote))
+        response = UpVoteAnswerView.as_view()(request3, **{'aid': 1})
+        self.assertEqual(response.status_code, 400)
