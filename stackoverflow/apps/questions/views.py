@@ -2,6 +2,7 @@ from rest_framework.generics import (CreateAPIView, UpdateAPIView, RetrieveAPIVi
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .renderers import (QuestionRenderer, VotesRenderer, QuestionListRenderer)
 from .serializers import (PostQuestionSerializer, UpdateQuestionSerializer,
@@ -146,7 +147,7 @@ class UpVoteQuestionView(CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class DownVoteQuestion(CreateAPIView):
+class DownVoteQuestionView(CreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (VotesRenderer,)
     serializer_class = VotesSerializer
@@ -170,10 +171,20 @@ class DownVoteQuestion(CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class GetRecommendedQuestions(ListAPIView):
+class GetRecommendedQuestionsView(ListAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (QuestionListRenderer,)
     serializer_class = GetQuestionSerializer
 
     def get_queryset(self):
         return Question.objects.all().filter().order_by('up_votes')
+
+
+class SearchQuestionsView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (QuestionListRenderer,)
+    serializer_class = GetQuestionSerializer
+
+    def get_queryset(self):
+        param = self.request.query_params.get('topic', '')
+        return Question.objects.all().filter(question_tag_fk__tag=param).order_by('id')
