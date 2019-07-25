@@ -7,6 +7,7 @@ from django.test import TestCase, RequestFactory
 
 from .backends import JWTAuthentication
 from .views import RegistrationView, LoginView, UserProfileView
+from .models import UserManager
 
 from minimock import Mock
 import smtplib

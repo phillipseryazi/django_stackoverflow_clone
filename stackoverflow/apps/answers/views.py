@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .renderers import AnswerRenderer, AnswerListRenderer
-from .serializers import PostAnswerSerializer, UpdateAnswerSerializer, VotesSerializer
+from .serializers import PostAnswerSerializer, UpdateAnswerSerializer, AnswerVotesSerializer
 from .models import Answer, Votes
 from ..users.backends import JWTAuthentication
 from ...utils.decoder import decode_token
@@ -112,7 +112,7 @@ def save_badge(user, request, badge, email_dict):
 class UpVoteAnswerView(CreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (AnswerRenderer,)
-    serializer_class = VotesSerializer
+    serializer_class = AnswerVotesSerializer
     lookup_url_kwarg = 'aid'
 
     def post(self, request, *args, **kwargs):
