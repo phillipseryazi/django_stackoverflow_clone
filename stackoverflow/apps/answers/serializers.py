@@ -24,7 +24,7 @@ class UpdateAnswerSerializer(serializers.ModelSerializer):
         return instance
 
 
-class VotesSerializer(serializers.ModelSerializer):
+class AnswerVotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Votes
         fields = ('id', 'user_id', 'up_vote', 'down_vote', 'answer_id')
