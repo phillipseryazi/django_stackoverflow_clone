@@ -125,3 +125,13 @@ REST_FRAMEWORK = {
 # EMAIL SENDER
 EMAIL_BACKEND = "djmail.backends.default.EmailBackend"
 DJMAIL_REAL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    }
+}
